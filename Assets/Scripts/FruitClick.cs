@@ -36,9 +36,7 @@ public class FruitClick : MonoBehaviour
     private void MoveToRandomPosition()
     {
         if (mainCamera == null)
-        {
             return;
-        }
 
         Vector3 min = mainCamera.ViewportToWorldPoint(new Vector3(0f, 0f, Mathf.Abs(mainCamera.transform.position.z)));
         Vector3 max = mainCamera.ViewportToWorldPoint(new Vector3(1f, 1f, Mathf.Abs(mainCamera.transform.position.z)));
