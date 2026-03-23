@@ -2,45 +2,65 @@ using UnityEngine;
 
 public class FruitClick : MonoBehaviour
 {
-    // We keep a reference to the main camera so we can convert screen positions to world positions.
+    [SerializeField] private float autoMoveDelay = 2f;
+
     private Camera mainCamera;
+    private SpriteRenderer spriteRenderer;
+    private float moveTimer;
 
     private void Awake()
     {
-        // Find the main camera once when the object is created.
         mainCamera = Camera.main;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        ResetMoveTimer();
+    }
+
+    private void Update()
+    {
+        moveTimer -= Time.deltaTime;
+
+        if (moveTimer <= 0f)
+        {
+            MoveToRandomPosition();
+            ResetMoveTimer();
+        }
     }
 
     private void OnMouseDown()
     {
-        // This method is called by Unity when the player clicks this object.
-        // It works when the object has a Collider or Collider2D.
-
-        // Show a message in the Console so we know the click worked.
         Debug.Log("Fruit clicked");
+        MoveToRandomPosition();
+        ResetMoveTimer();
+    }
 
-        // If there is no main camera, we stop here to avoid errors.
+    private void MoveToRandomPosition()
+    {
         if (mainCamera == null)
         {
             return;
         }
 
-        // Pick a random point on the screen using viewport coordinates.
-        // 0 means the left/bottom side of the screen and 1 means the right/top side.
-        float randomX = Random.Range(0.1f, 0.9f);
-        float randomY = Random.Range(0.1f, 0.9f);
+        Vector3 min = mainCamera.ViewportToWorldPoint(new Vector3(0f, 0f, Mathf.Abs(mainCamera.transform.position.z)));
+        Vector3 max = mainCamera.ViewportToWorldPoint(new Vector3(1f, 1f, Mathf.Abs(mainCamera.transform.position.z)));
 
-        // Work out how far this object is from the camera.
-        // We use this distance so the new position stays visible.
-        float distanceFromCamera = transform.position.z - mainCamera.transform.position.z;
+        float halfWidth = 0.5f;
+        float halfHeight = 0.5f;
 
-        // Convert the random screen point into a world position.
-        Vector3 newPosition = mainCamera.ViewportToWorldPoint(new Vector3(randomX, randomY, distanceFromCamera));
+        if (spriteRenderer != null)
+        {
+            Bounds bounds = spriteRenderer.bounds;
+            halfWidth = bounds.extents.x;
+            halfHeight = bounds.extents.y;
+        }
 
-        // Keep the current Z position so the object stays on the same 2D layer.
-        newPosition.z = transform.position.z;
+        float randomX = Random.Range(min.x + halfWidth, max.x - halfWidth);
+        float randomY = Random.Range(min.y + halfHeight, max.y - halfHeight);
 
-        // Move the fruit to the new random position.
-        transform.position = newPosition;
+        transform.position = new Vector3(randomX, randomY, transform.position.z);
+    }
+
+    private void ResetMoveTimer()
+    {
+        moveTimer = autoMoveDelay;
     }
 }
