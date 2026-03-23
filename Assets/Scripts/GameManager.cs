@@ -1,16 +1,17 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     // UI text that shows the current score.
-    [SerializeField] private Text scoreText;
+    [SerializeField] private TMP_Text scoreText;
 
     // UI text that shows the time left.
-    [SerializeField] private Text timerText;
+    [SerializeField] private TMP_Text timerText;
 
     // UI text that appears when the round ends.
-    [SerializeField] private Text gameOverText;
+    [SerializeField] private TMP_Text gameOverText;
 
     // Button that starts the round again.
     [SerializeField] private Button restartButton;
@@ -72,7 +73,6 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameRunning()
     {
-        // Other scripts can ask if the game is still active.
         return gameRunning;
     }
 
@@ -141,7 +141,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
-        // Show the score in a simple beginner-friendly format.
         if (scoreText != null)
         {
             scoreText.text = "Score: " + score;
@@ -150,7 +149,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTimerText()
     {
-        // Show the timer as a whole number.
         if (timerText != null)
         {
             timerText.text = "Time: " + Mathf.CeilToInt(timeLeft);
