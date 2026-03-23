@@ -688,6 +688,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autoMoveDelay: 2
+  eatDuration: 0.15
+  eatenScaleMultiplier: 0.2
+  audioSource: {fileID: 0}
+  eatSound: {fileID: 8300000, guid: 35ce9bed6c1feae41bb87b3e9287e8df, type: 3}
 --- !u!61 &1204789885
 BoxCollider2D:
   m_ObjectHideFlags: 0
