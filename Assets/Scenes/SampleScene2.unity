@@ -550,10 +550,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1d29af664534420a8a4e8d39f36d3c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreText: {fileID: 0}
-  timerText: {fileID: 0}
+  scoreText: {fileID: 1371188172}
+  timerText: {fileID: 1525738694}
   livesText: {fileID: 0}
-  gameOverText: {fileID: 0}
+  gameOverText: {fileID: 590947762}
   restartButton: {fileID: 2075195623}
   startTime: 30
   startLives: 3
