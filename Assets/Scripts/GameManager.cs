@@ -1,17 +1,19 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     // UI text that shows the current score.
-    [SerializeField] private TMP_Text scoreText;
+    [SerializeField] private Text scoreText;
 
     // UI text that shows the time left.
-    [SerializeField] private TMP_Text timerText;
+    [SerializeField] private Text timerText;
+
+    // UI text that shows the current lives.
+    [SerializeField] private Text livesText;
 
     // UI text that appears when the round ends.
-    [SerializeField] private TMP_Text gameOverText;
+    [SerializeField] private Text gameOverText;
 
     // Button that starts the round again.
     [SerializeField] private Button restartButton;
@@ -19,17 +21,29 @@ public class GameManager : MonoBehaviour
     // How many seconds the game lasts.
     [SerializeField] private float startTime = 30f;
 
+    // How many misses the player can make.
+    [SerializeField] private int startLives = 3;
+
+    // Main camera used to turn mouse position into world position.
+    private Camera mainCamera;
+
     // Current score value.
     private int score;
 
     // Time left in the game.
     private float timeLeft;
 
+    // Current lives value.
+    private int lives;
+
     // True while the game is still running.
     private bool gameRunning;
 
     private void Start()
     {
+        // Find the main camera once when the game starts.
+        mainCamera = Camera.main;
+
         // Connect the button once so it can restart the round.
         if (restartButton != null)
         {
@@ -57,6 +71,18 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // Count a miss if the player clicks somewhere that is not a fruit.
+        if (Input.GetMouseButtonDown(0))
+        {
+            CheckForMissClick();
+        }
+
+        // Stop here if the last click used up the final life.
+        if (!gameRunning)
+        {
+            return;
+        }
+
         // Count down every frame.
         timeLeft -= Time.deltaTime;
 
@@ -73,6 +99,7 @@ public class GameManager : MonoBehaviour
 
     public bool IsGameRunning()
     {
+        // Other scripts can ask if the game is still active.
         return gameRunning;
     }
 
@@ -94,6 +121,7 @@ public class GameManager : MonoBehaviour
         // Reset the game values.
         score = 0;
         timeLeft = startTime;
+        lives = Mathf.Max(0, startLives);
         gameRunning = true;
 
         // Hide the end-of-round UI.
@@ -107,9 +135,10 @@ public class GameManager : MonoBehaviour
             restartButton.gameObject.SetActive(false);
         }
 
-        // Show the fresh score and timer.
+        // Show the fresh score, timer, and lives.
         UpdateScoreText();
         UpdateTimerText();
+        UpdateLivesText();
 
         // Tell every fruit to start a new round too.
         FruitClick[] fruits = FindObjectsOfType<FruitClick>();
@@ -119,12 +148,61 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void CheckForMissClick()
+    {
+        // If there is no camera, we cannot test the click position.
+        if (mainCamera == null)
+        {
+            return;
+        }
+
+        // Turn the mouse position into a 2D world position.
+        Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 clickPosition = new Vector2(mouseWorldPosition.x, mouseWorldPosition.y);
+
+        // Look for all 2D colliders under the click.
+        Collider2D[] hitColliders = Physics2D.OverlapPointAll(clickPosition);
+
+        // If any hit belongs to a fruit, this click is not a miss.
+        for (int i = 0; i < hitColliders.Length; i++)
+        {
+            if (hitColliders[i].GetComponentInParent<FruitClick>() != null)
+            {
+                return;
+            }
+        }
+
+        // No fruit was found under the click, so count it as a miss.
+        LoseLife();
+    }
+
+    private void LoseLife()
+    {
+        // Do not change lives after the round is already over.
+        if (!gameRunning)
+        {
+            return;
+        }
+
+        // Remove one life and update the screen.
+        lives -= 1;
+        UpdateLivesText();
+
+        // End the game right away when no lives are left.
+        if (lives <= 0)
+        {
+            lives = 0;
+            UpdateLivesText();
+            EndRound();
+        }
+    }
+
     private void EndRound()
     {
         // Mark the game as finished.
         gameRunning = false;
 
-        // Make sure the timer shows zero.
+        // Make sure the timer shows zero when time has run out.
         UpdateTimerText();
 
         // Show the end-of-round UI.
@@ -141,6 +219,7 @@ public class GameManager : MonoBehaviour
 
     private void UpdateScoreText()
     {
+        // Show the score in a simple beginner-friendly format.
         if (scoreText != null)
         {
             scoreText.text = "Score: " + score;
@@ -149,9 +228,19 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTimerText()
     {
+        // Show the timer as a whole number.
         if (timerText != null)
         {
             timerText.text = "Time: " + Mathf.CeilToInt(timeLeft);
+        }
+    }
+
+    private void UpdateLivesText()
+    {
+        // Show the remaining lives on screen.
+        if (livesText != null)
+        {
+            livesText.text = "Lives: " + lives;
         }
     }
 }

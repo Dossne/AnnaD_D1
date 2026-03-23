@@ -5,9 +5,13 @@ public class FruitClick : MonoBehaviour
     // Time in seconds before the fruit moves by itself.
     [SerializeField] private float autoMoveDelay = 2f;
 
-    // We keep references to important scene objects.
+    // We keep a reference to the main camera so we can read the visible screen area.
     private Camera mainCamera;
+
+    // We use the SpriteRenderer to find out how big the fruit looks on screen.
     private SpriteRenderer spriteRenderer;
+
+    // We talk to the GameManager to add score and check if the game is still running.
     private GameManager gameManager;
 
     // This timer counts down until the fruit should move automatically.
@@ -49,6 +53,9 @@ public class FruitClick : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // This method is called by Unity when the player clicks this object.
+        // It works when the object already has a Collider2D in the scene.
+
         // If the game has ended, ignore clicks.
         if (gameManager != null && !gameManager.IsGameRunning())
         {
@@ -82,7 +89,7 @@ public class FruitClick : MonoBehaviour
 
     private void MoveToRandomPosition()
     {
-        // If there is no main camera, stop here to avoid errors.
+        // If there is no main camera, we stop here to avoid errors.
         if (mainCamera == null)
         {
             return;
@@ -115,6 +122,7 @@ public class FruitClick : MonoBehaviour
         float halfHeight = 0f;
 
         // If the object has a SpriteRenderer, use half of its size as padding.
+        // This keeps the full fruit inside the screen instead of letting it go off the edge.
         if (spriteRenderer != null)
         {
             halfWidth = spriteRenderer.bounds.extents.x;
