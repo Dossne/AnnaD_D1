@@ -7,11 +7,13 @@ public class FruitClick : MonoBehaviour
     private Camera mainCamera;
     private SpriteRenderer spriteRenderer;
     private float moveTimer;
+    private GameManager gameManager;
 
     private void Awake()
     {
         mainCamera = Camera.main;
         spriteRenderer = GetComponent<SpriteRenderer>();
+        gameManager = FindObjectOfType<GameManager>();
         ResetMoveTimer();
     }
 
@@ -29,6 +31,12 @@ public class FruitClick : MonoBehaviour
     private void OnMouseDown()
     {
         Debug.Log("Fruit clicked");
+
+        if (gameManager != null && gameManager.IsGameRunning())
+        {
+            gameManager.AddScore();
+        }
+
         MoveToRandomPosition();
         ResetMoveTimer();
     }
@@ -38,8 +46,12 @@ public class FruitClick : MonoBehaviour
         if (mainCamera == null)
             return;
 
-        Vector3 min = mainCamera.ViewportToWorldPoint(new Vector3(0f, 0f, Mathf.Abs(mainCamera.transform.position.z)));
-        Vector3 max = mainCamera.ViewportToWorldPoint(new Vector3(1f, 1f, Mathf.Abs(mainCamera.transform.position.z)));
+        Vector3 min = mainCamera.ViewportToWorldPoint(
+            new Vector3(0f, 0f, Mathf.Abs(mainCamera.transform.position.z))
+        );
+        Vector3 max = mainCamera.ViewportToWorldPoint(
+            new Vector3(1f, 1f, Mathf.Abs(mainCamera.transform.position.z))
+        );
 
         float halfWidth = 0.5f;
         float halfHeight = 0.5f;
