@@ -1,26 +1,25 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class FruitClick : MonoBehaviour
 {
-    [SerializeField] private float autoMoveDelay = 2f;
     [SerializeField] private float eatDuration = 0.15f;
     [SerializeField] private float eatenScaleMultiplier = 0.2f;
+    [SerializeField] private float spawnDuration = 0.2f;
+
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip eatSound;
+    [SerializeField] private GameObject eatEffectPrefab;
 
-    private Camera mainCamera;
-    private SpriteRenderer spriteRenderer;
     private GameManager gameManager;
-    private float moveTimer;
+    private FruitSpawner fruitSpawner;
     private Vector3 normalScale;
     private bool isEating;
 
     private void Awake()
     {
-        mainCamera = Camera.main;
-        spriteRenderer = GetComponent<SpriteRenderer>();
         gameManager = FindObjectOfType<GameManager>();
+        fruitSpawner = FindObjectOfType<FruitSpawner>();
 
         if (audioSource == null)
         {
@@ -28,28 +27,11 @@ public class FruitClick : MonoBehaviour
         }
 
         normalScale = transform.localScale;
-        ResetMoveTimer();
     }
 
-    private void Update()
+    private void Start()
     {
-        if (isEating)
-        {
-            return;
-        }
-
-        if (gameManager != null && !gameManager.IsGameRunning())
-        {
-            return;
-        }
-
-        moveTimer -= Time.deltaTime;
-
-        if (moveTimer <= 0f)
-        {
-            MoveToRandomPosition();
-            ResetMoveTimer();
-        }
+        StartCoroutine(PlaySpawnEffect());
     }
 
     private void OnMouseDown()
@@ -66,17 +48,9 @@ public class FruitClick : MonoBehaviour
 
         Debug.Log("Fruit clicked");
 
-        if (audioSource == null)
+        // 🔊 ТЕСТОВЫЙ ЗВУК (через Play)
+        if (audioSource != null)
         {
-            Debug.LogError("AudioSource is NULL");
-        }
-        else if (eatSound == null)
-        {
-            Debug.LogError("EatSound is NULL");
-        }
-        else
-        {
-            audioSource.clip = eatSound;
             audioSource.Play();
         }
 
@@ -88,18 +62,48 @@ public class FruitClick : MonoBehaviour
         StartCoroutine(PlayEatenEffect());
     }
 
-    public void ResetFruit()
+    private IEnumerator PlaySpawnEffect()
     {
-        StopAllCoroutines();
-        isEating = false;
-        transform.localScale = normalScale;
-        ResetMoveTimer();
-        MoveToRandomPosition();
+        Vector3 targetScale = normalScale;
+        float randomScale = Random.Range(1.05f, 1.15f);
+        Vector3 overshootScale = normalScale * randomScale;
+
+        transform.localScale = Vector3.zero;
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < spawnDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / spawnDuration);
+
+            transform.localScale = Vector3.Lerp(Vector3.zero, overshootScale, progress);
+            yield return null;
+        }
+
+        elapsedTime = 0f;
+
+        while (elapsedTime < 0.08f)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / 0.08f);
+
+            transform.localScale = Vector3.Lerp(overshootScale, targetScale, progress);
+            yield return null;
+        }
+
+        transform.localScale = targetScale;
     }
 
     private IEnumerator PlayEatenEffect()
     {
         isEating = true;
+
+        if (eatEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(eatEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 1f);
+        }
 
         Vector3 startScale = normalScale;
         Vector3 targetScale = normalScale * eatenScaleMultiplier;
@@ -110,71 +114,21 @@ public class FruitClick : MonoBehaviour
         {
             elapsedTime += Time.deltaTime;
 
-            float progress = elapsedTime / eatDuration;
-            progress = Mathf.Clamp01(progress);
-
+            float progress = Mathf.Clamp01(elapsedTime / eatDuration);
             transform.localScale = Vector3.Lerp(startScale, targetScale, progress);
 
             yield return null;
         }
 
         transform.localScale = targetScale;
-        MoveToRandomPosition();
-        transform.localScale = normalScale;
-        ResetMoveTimer();
-        isEating = false;
-    }
 
-    private void MoveToRandomPosition()
-    {
-        if (mainCamera == null)
+        if (fruitSpawner != null)
         {
-            return;
+            fruitSpawner.NotifyFruitEaten(this);
         }
-
-        Vector3 newPosition = GetRandomPositionInsideScreen();
-        transform.position = newPosition;
-    }
-
-    private void ResetMoveTimer()
-    {
-        moveTimer = Mathf.Max(0.1f, autoMoveDelay);
-    }
-
-    private Vector3 GetRandomPositionInsideScreen()
-    {
-        float distanceFromCamera = transform.position.z - mainCamera.transform.position.z;
-
-        Vector3 bottomLeft = mainCamera.ViewportToWorldPoint(new Vector3(0f, 0f, distanceFromCamera));
-        Vector3 topRight = mainCamera.ViewportToWorldPoint(new Vector3(1f, 1f, distanceFromCamera));
-
-        float halfWidth = 0f;
-        float halfHeight = 0f;
-
-        if (spriteRenderer != null)
+        else
         {
-            halfWidth = spriteRenderer.bounds.extents.x;
-            halfHeight = spriteRenderer.bounds.extents.y;
+            Destroy(gameObject);
         }
-
-        float minX = bottomLeft.x + halfWidth;
-        float maxX = topRight.x - halfWidth;
-        float minY = bottomLeft.y + halfHeight;
-        float maxY = topRight.y - halfHeight;
-
-        if (minX > maxX)
-        {
-            minX = maxX = (bottomLeft.x + topRight.x) * 0.5f;
-        }
-
-        if (minY > maxY)
-        {
-            minY = maxY = (bottomLeft.y + topRight.y) * 0.5f;
-        }
-
-        float randomX = Random.Range(minX, maxX);
-        float randomY = Random.Range(minY, maxY);
-
-        return new Vector3(randomX, randomY, transform.position.z);
     }
 }

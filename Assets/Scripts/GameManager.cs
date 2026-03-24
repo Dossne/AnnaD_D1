@@ -4,40 +4,19 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    // UI text that shows the current score.
     [SerializeField] private TMP_Text scoreText;
-
-    // UI text that shows the time left.
     [SerializeField] private TMP_Text timerText;
-
-    // UI text that shows the current lives.
     [SerializeField] private TMP_Text livesText;
-
-    // UI text that appears when the round ends.
     [SerializeField] private TMP_Text gameOverText;
-
-    // Button that starts the round again.
     [SerializeField] private Button restartButton;
-
-    // How many seconds the game lasts.
     [SerializeField] private float startTime = 30f;
-
-    // How many misses the player can make.
     [SerializeField] private int startLives = 3;
+    [SerializeField] private FruitSpawner fruitSpawner;
 
-    // Main camera used to turn mouse position into world position.
     private Camera mainCamera;
-
-    // Current score value.
     private int score;
-
-    // Time left in the game.
     private float timeLeft;
-
-    // Current lives value.
     private int lives;
-
-    // True while the game is still running.
     private bool gameRunning;
 
     private void Start()
@@ -47,6 +26,11 @@ public class GameManager : MonoBehaviour
         if (restartButton != null)
         {
             restartButton.onClick.AddListener(RestartRound);
+        }
+
+        if (fruitSpawner == null)
+        {
+            fruitSpawner = FindObjectOfType<FruitSpawner>();
         }
 
         RestartRound();
@@ -128,7 +112,12 @@ public class GameManager : MonoBehaviour
         FruitClick[] fruits = FindObjectsOfType<FruitClick>();
         for (int i = 0; i < fruits.Length; i++)
         {
-            fruits[i].ResetFruit();
+            Destroy(fruits[i].gameObject);
+        }
+
+        if (fruitSpawner != null)
+        {
+            fruitSpawner.SpawnWave();
         }
     }
 
